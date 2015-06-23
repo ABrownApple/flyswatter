@@ -88,4 +88,28 @@
         ads:adUnitId="@string/banner_ad_unit_id">
     </com.google.android.gms.ads.AdView>
 
+    <swatter.fly.bennycode.flyswatter.AnimatedView
+        android:id="@+id/animateFly1"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:visibility="invisible"
+        android:layout_alignBottom="@+id/rightArrowButton"
+        android:layout_toRightOf="@+id/leftArrowButton"
+        android:layout_toEndOf="@+id/leftArrowButton" />
+    <swatter.fly.bennycode.flyswatter.AnimatedView
+        android:id="@+id/animateFly2"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:visibility="invisible"
+        android:layout_toStartOf="@+id/killScoreText"
+        android:layout_alignBottom="@+id/animateFly1"
+        android:layout_alignRight="@+id/minusButton"
+        android:layout_alignEnd="@+id/minusButton" />
+    <swatter.fly.bennycode.flyswatter.AnimatedView
+        android:id="@+id/animateFly3"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:visibility="invisible"
+        android:layout_above="@+id/adView" />
+
 </RelativeLayout>

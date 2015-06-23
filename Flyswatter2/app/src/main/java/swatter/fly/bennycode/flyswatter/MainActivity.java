@@ -11,12 +11,17 @@ import android.os.Vibrator;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.animation.TranslateAnimation;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends ActionBarActivity implements SensorEventListener {
     private SensorManager sensorManager;
@@ -25,10 +30,16 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private float mAccelNoGrav;
     private float mAccelWithGrav;
     private float mLastAccelWithGrav;
-    private static String SWATTER = "swatter";
-    private static String KILLSCORE = "killscore";
+    private static final String SWATTER = "swatter";
+    private static final String HIT_COUNT = "hitCount";
+    private static final String KILLSCORE = "killscore";
+    private static final int HITS_TO_UNLOCK_BASEBALLBAT = 150;
     MediaPlayer mp;
-    private int AMOUNT_OF_SWATTERS = 3; //the amount of different swatters starts on zero
+    private int AMOUNT_OF_SWATTERS = 2; //the amount of different swatters starts on zero
+    private Timer flyTimer1;
+    private Timer flyTimer2;
+    private Timer flyTimer3;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,10 +58,74 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         setArrowOnClicks();
         setSwatter();
         setSwipeListener();
+        setTimerForFly();
+        setCommercial();
+        checkIfBaseballBatIsUnlocked();
 
+    }
+    private void setCommercial(){
         AdView mAdView = (AdView) findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
+    }
+    private void setTimerForFly(){
+        if(flyTimer1 != null){
+            flyTimer1.cancel();
+        }
+        if(flyTimer2 != null){
+            flyTimer1.cancel();
+        }
+        if(flyTimer3 != null){
+            flyTimer1.cancel();
+        }
+        flyTimer1 = new Timer();
+        flyTimer2 = new Timer();
+        flyTimer3 = new Timer();
+        flyTimer1.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ImageView animatedFly = (ImageView)findViewById(R.id.animateFly1);
+                        animatedFly.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+        }, 60000); //one minute
+        flyTimer2.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ImageView animatedFly = (ImageView)findViewById(R.id.animateFly2);
+                        animatedFly.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+        }, 60000*2); //two minutes
+        flyTimer3.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ImageView animatedFly = (ImageView)findViewById(R.id.animateFly3);
+                        animatedFly.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+        }, 60000*3); //three minutes
+    }
+    private void hideFly(){
+        ImageView animatedFly1 = (ImageView)findViewById(R.id.animateFly1);
+        animatedFly1.setVisibility(View.INVISIBLE);
+        ImageView animatedFly2 = (ImageView)findViewById(R.id.animateFly2);
+        animatedFly2.setVisibility(View.INVISIBLE);
+        ImageView animatedFly3 = (ImageView)findViewById(R.id.animateFly3);
+        animatedFly3.setVisibility(View.INVISIBLE);
+        setTimerForFly();
     }
     private void setSwipeListener(){
         ImageView imageView = (ImageView)findViewById(R.id.imageView);
@@ -97,11 +172,12 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             }
         });
     }
+    @Override
     protected void onResume() {
         super.onResume();
         sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
     }
-    //onPause() unregister the accelerometer for stop listening the events
+    @Override
     protected void onPause() {
         super.onPause();
         sensorManager.unregisterListener(this);
@@ -120,6 +196,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         float delta = mAccelWithGrav - mLastAccelWithGrav;
         mAccelNoGrav = mAccelNoGrav * 0.9f + delta;
         if (mAccelNoGrav > 7) {
+            hideFly();
+            addHitCount();
             mp.start();
         }
     }
@@ -183,5 +261,27 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private int getCurrentSwatter(){
         SharedPreferences prefs = getSharedPreferences(SWATTER, MODE_PRIVATE);
         return prefs.getInt(SWATTER, 0); //0 is the default value.
+    }
+    private void checkIfBaseballBatIsUnlocked(){
+        if(getCurrentHitCount() > HITS_TO_UNLOCK_BASEBALLBAT){
+            AMOUNT_OF_SWATTERS += 1;
+        }
+        if(getCurrentHitCount() > HITS_TO_UNLOCK_BASEBALLBAT && getCurrentHitCount() < HITS_TO_UNLOCK_BASEBALLBAT + 25){
+            Toast.makeText(getApplicationContext(),"Tried the new baseball bat?",Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void addHitCount(){
+        int newHitCount = getCurrentHitCount() + 1;
+        SharedPreferences.Editor editor = getSharedPreferences(SWATTER, MODE_PRIVATE).edit();
+        editor.putInt(HIT_COUNT, newHitCount);
+        editor.commit();
+        if(newHitCount == HITS_TO_UNLOCK_BASEBALLBAT){
+            Toast.makeText(getApplicationContext(),"Baseball Bat unlocked",Toast.LENGTH_LONG).show();
+            AMOUNT_OF_SWATTERS += 1;
+        }
+    }
+    private int getCurrentHitCount(){
+        SharedPreferences prefs = getSharedPreferences(SWATTER, MODE_PRIVATE);
+        return prefs.getInt(HIT_COUNT, 0); //0 is the default value.
     }
 }
